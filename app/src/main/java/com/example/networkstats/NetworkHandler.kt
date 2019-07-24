@@ -6,6 +6,17 @@ import android.os.Build
 import android.telephony.*
 import android.telephony.gsm.GsmCellLocation
 import androidx.core.content.ContextCompat
+import android.telephony.CellInfoWcdma
+import android.telephony.CellIdentityLte
+import android.telephony.CellInfoLte
+import android.telephony.CellInfoGsm
+import android.telephony.CellInfoCdma
+import android.telephony.CellInfo
+import android.annotation.TargetApi
+
+
+
+
 
 
 class NetworkHandler(contextCompat: ContextCompat, context: Context) {
@@ -21,7 +32,7 @@ class NetworkHandler(contextCompat: ContextCompat, context: Context) {
         var rsrp: Int = 0
         val cellInfoList = tele.allCellInfo
         for (cellInfo in cellInfoList) {
-            if (cellInfo is CellInfoLte) {
+            if (cellInfo is CellInfoLte && cellInfo.isRegistered) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     rsrp = cellInfo.cellSignalStrength.rsrp
                 } else {
@@ -38,7 +49,7 @@ class NetworkHandler(contextCompat: ContextCompat, context: Context) {
         var rscp: Int = 0
         val cellInfoList = tele.allCellInfo
         for (cellInfo in cellInfoList) {
-            if (cellInfo is CellInfoWcdma) {
+            if (cellInfo is CellInfoWcdma && cellInfo.isRegistered) {
                 rscp = (cellInfo.cellSignalStrength.asuLevel - 116)
             } else if (cellInfo is CellInfoCdma) {
                 rscp = (cellInfo.cellSignalStrength.asuLevel - 116)
@@ -52,7 +63,7 @@ class NetworkHandler(contextCompat: ContextCompat, context: Context) {
         var rxLevel: Int = 0
         val cellInfoList = tele.allCellInfo
         for (cellInfo in cellInfoList) {
-            if (cellInfo is CellInfoGsm) {
+            if (cellInfo is CellInfoGsm && cellInfo.isRegistered) {
                 rxLevel = (2 * (cellInfo.cellSignalStrength.asuLevel) - 113)
             }
         }
@@ -64,21 +75,16 @@ class NetworkHandler(contextCompat: ContextCompat, context: Context) {
         var cellID: Int = 0
         val cellInfoList = tele.allCellInfo
         for (cellInfo in cellInfoList) {
-            if (cellInfo is CellInfoLte) {
+            if (cellInfo is CellInfoLte && cellInfo.isRegistered) {
+                cellID = cellInfo.cellIdentity.ci
 
-                val longCid = ((tele.cellLocation) as GsmCellLocation).cid
-                val cellidHex = DecToHex(longCid)
-                val eNBHex = cellidHex.substring(0, cellidHex.length - 2)
-                val eNB = (HexToDec(eNBHex))
-
-                cellID = eNB
-
-            } else if (cellInfo is CellInfoGsm) {
-                cellID = ((tele.cellLocation) as GsmCellLocation).cid
-            } else if (cellInfo is CellInfoWcdma) {
-                cellID = ((tele.cellLocation) as GsmCellLocation).cid
-            } else if (cellInfo is CellInfoCdma) {
-                cellID = ((tele.cellLocation) as GsmCellLocation).cid
+            } else if (cellInfo is CellInfoGsm && cellInfo.isRegistered) {
+                cellID = cellInfo.cellIdentity.cid
+            } else if (cellInfo is CellInfoWcdma && cellInfo.isRegistered) {
+                cellID = cellInfo.cellIdentity.cid
+            } else if (cellInfo is CellInfoCdma && cellInfo.isRegistered) {
+                cellID = cellInfo.cellIdentity.basestationId
+                //cellID = ((tele.cellLocation) as GsmCellLocation).cid
             }
         }
         return cellID
@@ -108,7 +114,72 @@ class NetworkHandler(contextCompat: ContextCompat, context: Context) {
         return lac
     }
 
+    @SuppressLint("MissingPermission")
+    fun getCQI(): String {
+        var cqi: String = String()
+        val cellInfoList = tele.allCellInfo
+        for (cellInfo in cellInfoList) {
+            if (cellInfo is CellInfoLte && cellInfo.isRegistered) {
+                val cqi = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    cellInfo.cellSignalStrength.cqi.toString()
+                } else {
+                    cqi = String()
+                }
+            }
+        }
+        return cqi
+    }
 
+    @SuppressLint("MissingPermission")
+    fun getNeighbors(): List<CellInfo> {
+        var neighboringCellList: MutableList<CellInfo> = mutableListOf()
+        val cellinfo = tele.allCellInfo
+        for (cell in cellinfo) {
+            if (!cell.isRegistered) {
+                neighboringCellList.add(cell)
+            }
+        }
+        return neighboringCellList
+    }
+
+    @SuppressLint("MissingPermission")
+    fun getPSC(): String {
+        var psc = String()
+        val cellinfo = tele.allCellInfo
+        for (cell in cellinfo) {
+            if (cell.isRegistered && cell is CellInfoCdma) {
+                (cell as CellInfoWcdma).cellIdentity.psc
+            }
+        }
+        return psc
+    }
+
+    fun getNewtworkType(): String {
+        return getNetworkTypeString(tele.networkType)
+    }
+
+
+    @SuppressLint("MissingPermission")
+    fun getOperatorName(): String {
+        return tele.networkOperatorName
+    }
+
+
+    private fun getNetworkTypeString(Ntype: Int): String {
+        var type = "unknown"
+        when (Ntype) {
+            TelephonyManager.NETWORK_TYPE_EDGE -> type = "2G"
+            TelephonyManager.NETWORK_TYPE_GPRS -> type = "2G"
+            TelephonyManager.NETWORK_TYPE_UMTS -> type = "3G"
+            TelephonyManager.NETWORK_TYPE_1xRTT -> type = "2G"
+            TelephonyManager.NETWORK_TYPE_HSDPA -> type = "3G"
+            TelephonyManager.NETWORK_TYPE_CDMA -> type = "3G"
+            TelephonyManager.NETWORK_TYPE_HSPA -> type = "3G"
+            TelephonyManager.NETWORK_TYPE_LTE -> type = "LTE"
+            else -> type = "unknown"
+        }
+        return type
+    }
 
     // Decimal -> hexadecimal
     private fun DecToHex(dec: Int): String {
@@ -119,5 +190,44 @@ class NetworkHandler(contextCompat: ContextCompat, context: Context) {
     private fun HexToDec(hex: String): Int {
         return Integer.parseInt(hex, 16)
     }
+
+    @SuppressLint("MissingPermission")
+    fun getCellInfo(): String? {
+        var ret: String? = null
+        val listCellInfo = tele.allCellInfo
+        if (listCellInfo != null)
+            for (a_Info in listCellInfo!!) {
+                if (a_Info is CellInfoCdma)
+                    ret = ret + "\n Cell info cdma: " + a_Info.toString()
+                else if (a_Info is CellInfoGsm)
+                    ret = ret + "\n Cell info gsm: " + a_Info.toString()
+                else if (a_Info is CellInfoLte) {
+                    ret = ret + "\n Cell info lte: " + a_Info.toString()
+                    val cellInfoLte = a_Info as CellInfoLte
+                    val cellIdentity = cellInfoLte
+                            .cellIdentity
+
+                } else if (a_Info is CellInfoWcdma)
+                    ret = ret + "\n Cell info : wcdma" + a_Info.toString()
+            }
+        return ret
+    }
+
+    private fun getSignalStrengthDbm(cellInfo: CellInfo): Int {
+        return (cellInfo as? CellInfoCdma)?.cellSignalStrength?.dbm
+                ?: ((cellInfo as? CellInfoGsm)?.cellSignalStrength?.dbm
+                        ?: ((cellInfo as? CellInfoLte)?.cellSignalStrength?.dbm
+                                ?: ((cellInfo as? CellInfoWcdma)?.cellSignalStrength?.dbm
+                                        ?: 0)))
+    }
+
+    private fun getSignalStrengthLevel(cellInfo: CellInfo): Int {
+        return (cellInfo as? CellInfoCdma)?.cellSignalStrength?.level
+                ?: ((cellInfo as? CellInfoGsm)?.cellSignalStrength?.level
+                        ?: ((cellInfo as? CellInfoLte)?.cellSignalStrength?.level
+                                ?: ((cellInfo as? CellInfoWcdma)?.cellSignalStrength?.level
+                                        ?: 0)))
+    }
+
 }
 

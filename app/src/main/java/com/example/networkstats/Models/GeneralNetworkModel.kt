@@ -1,6 +1,7 @@
 package com.example.networkstats.Models
 
 import android.telephony.AccessNetworkConstants
+import android.telephony.CellInfo
 
 data class GeneralNetworkModel(val lat: Double? = null,
                                val long: Double? = null,
@@ -10,7 +11,7 @@ data class GeneralNetworkModel(val lat: Double? = null,
                                val mnc: Int? = null,
                                val upLink: Float? = null,
                                val downLink: Float? = null,
-                               val neighbours: ArrayList<String>? = null,
+                               val neighbours: List<CellInfo>? = null,
                                val bandWith: String? = null,
                                val imei: String? = null,
                                val imsi: Double? = null,

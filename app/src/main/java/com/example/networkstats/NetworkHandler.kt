@@ -12,6 +12,12 @@ import android.telephony.CellInfo
 import android.telephony.TelephonyManager
 import com.example.networkstats.Models.GeneralNetworkModel
 import android.location.LocationManager
+import android.net.NetworkCapabilities
+import android.net.NetworkInfo
+import androidx.core.content.ContextCompat.getSystemService
+import android.net.ConnectivityManager
+
+
 
 
 class NetworkHandler(context: Context) {
@@ -428,6 +434,15 @@ class NetworkHandler(context: Context) {
             return location!!.longitude * 1E66
         }
         return 0.0
+    }
+
+    private fun getDownloadSpeed(): Int{
+        val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val netInfo = cm.activeNetworkInfo
+        //should check null because in airplane mode it will be null
+        val nc = cm.getNetworkCapabilities(cm.activeNetwork)
+        val downSpeed = nc!!.linkDownstreamBandwidthKbps
+        val upSpeed = nc.linkUpstreamBandwidthKbps
     }
 
 

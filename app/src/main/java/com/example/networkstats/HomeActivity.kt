@@ -1,7 +1,6 @@
 package com.example.networkstats
 
 import android.Manifest.permission.*
-import android.content.Context
 import android.content.pm.PackageManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -44,41 +43,68 @@ class HomeActivity : AppCompatActivity() {
     }
 
     fun getData() {
-        val rsrp = networkHandler.getRSRP()
-        rsrpTextView.text = rsrp.toString()
-        val rscp = networkHandler.getRscp()
-        rscpTextView.text = rscp.toString()
-        val rxlevel = networkHandler.getRxLevel()
-        rxLevelTextView.text = rxlevel.toString()
-        val cellID = networkHandler.getCellID()
-        cellIdTextView.text = cellID.toString()
-        val mnc = networkHandler.getMNC()
-        mncTextView.text = mnc.toString()
-        val mcc = networkHandler.getMCC()
-        mccTextView.text = mcc.toString()
-        val lac = networkHandler.getLAC()
-        lacTextView.text = lac.toString()
-        val cqi = networkHandler.getCQI()
-        cqi3gTextView.text = cqi.toString()
-        val psc = networkHandler.getPSC()
-        pscTextView.text = psc.toString()
-        val operatorName = networkHandler.getOperatorName()
-        operatorNameTextView.text = operatorName
-        val networkType = networkHandler.getNewtworkType()
-        networkTypeTextView.text = networkType
-        val arfcn = networkHandler.getArfcn()
-        arfcnTextView.text = arfcn.toString()
-        val rxQual = networkHandler.getRxQual()
-        rxQualTextView.text = rxQual.toString()
 
-        val generalNetworkModel = networkHandler.GetGeneralNetworkModel()
-        val lat = (generalNetworkModel.lat?.toString()?.substring(0, 7))
+        val generalNetworkModel = networkHandler.getGeneralNetworkModel()
+
+        val lat = generalNetworkModel.lat?.toString()
         latTextView.text = lat.toString()
-        val long = (generalNetworkModel.long?.toString()?.substring(0, 7))
+        val long = generalNetworkModel.long?.toString()
         longTextView.text = long.toString()
+        val networkType = generalNetworkModel.networkType
+        networkTypeTextView.text = networkType
+        val operatorName = generalNetworkModel.operator
+        operatorNameTextView.text = operatorName
+        val mcc = generalNetworkModel.mcc
+        mccTextView.text = mcc.toString()
+        val mnc = generalNetworkModel.mnc
+        mncTextView.text = mnc.toString()
+        val imsi = generalNetworkModel.imsi
+        imsiTextView.text = imsi
         val imei = generalNetworkModel.imei
         imeiTextView.text = imei.toString()
 
+
+
+
+        val twoGNetworkModel = networkHandler.get2gNetworkModel()
+
+        val rxlevel = twoGNetworkModel.rxLevel
+        rxLevelTextView.text = rxlevel.toString()
+        val rxQual = twoGNetworkModel.rxQual
+        rxQualTextView.text = rxQual.toString()
+        val lac = twoGNetworkModel.lac
+        lacTextView.text = lac.toString()
+        val cellID = twoGNetworkModel.cellID
+        cellIdTextView.text = cellID.toString()
+        val arfcn = twoGNetworkModel.arfcn
+        arfcnTextView.text = arfcn.toString()
+
+
+        val threeGNetworkModel = networkHandler.get3gNetworkModel()
+
+        val rscp = threeGNetworkModel.rscp
+        rscpTextView.text = rscp.toString()
+        val cqi = threeGNetworkModel.cqi
+        cqi3gTextView.text = cqi.toString()
+        val psc = threeGNetworkModel.psc
+        pscTextView.text = psc.toString()
+
+
+
+        val fourGNetworkModel = networkHandler.get4gNetworkModel()
+
+        val rsrp = fourGNetworkModel.rsrp
+        rsrpTextView.text = rsrp.toString()
+        val rsrq = fourGNetworkModel.rsrq
+        rsrqSnrTextView.text = rsrq
+        val tac = fourGNetworkModel.tac
+        tacTextView.text = tac.toString()
+        val pci = fourGNetworkModel.pci
+        pciTextView.text = pci.toString()
+        val rssi = fourGNetworkModel.rssi
+        rssiTextView.text = rssi
+        val cqi4g = fourGNetworkModel.cqi
+        cqi4gTextView.text = cqi4g
 
     }
 

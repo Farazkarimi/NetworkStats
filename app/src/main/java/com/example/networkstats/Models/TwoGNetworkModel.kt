@@ -4,5 +4,5 @@ data class TwoGNetworkModel(val rxLevel: Int?,
                             val rxQual: Int?,
                             val lac: Int?,
                             val cellID: Int?,
-                            val bcch: Int?,
+                            val bcch: String?,
                             val arfcn: Int?)

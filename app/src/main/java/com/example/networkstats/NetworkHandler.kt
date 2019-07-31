@@ -64,9 +64,6 @@ class NetworkHandler(context: Context) {
     }
 
 
-
-
-
     // Decimal -> hexadecimal
     private fun DecToHex(dec: Int): String {
         return String.format("%x", dec)
@@ -351,7 +348,14 @@ class NetworkHandler(context: Context) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     rsrq = cellInfo.cellSignalStrength.rsrq.toString()
                 } else {
-
+                    val cellSignalString = cellInfo.cellSignalStrength.toString()
+                    val cellSignalArray = cellSignalString.split(" ").toMutableList()
+                    cellSignalArray.removeAt(0)
+                    val cellSignalMap = cellSignalArray.associate {
+                        val (l,r) = it.split("=")
+                        l to r.toInt()
+                    }
+                    rsrq = cellSignalMap["rsrq"].toString()
                 }
             }
         }

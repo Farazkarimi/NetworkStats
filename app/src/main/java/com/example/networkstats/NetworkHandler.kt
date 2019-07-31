@@ -50,15 +50,12 @@ class NetworkHandler(context: Context) {
             if (cellInfo is CellInfoLte && cellInfo.isRegistered) {
                    val cqiString = cellInfo.cellSignalStrength.toString()
                 if (cqiString.length > 0) {
-                   val cqiArray = cqiString.split(" ")
+                   val cqiArray = cqiString.split(" ").toMutableList()
+                    cqiArray.removeAt(0)
                    cqiMap = cqiArray.associate {
                         val (l,r) = it.split("=")
                         l to r.toInt()
                     }
-//                    cqiMap = cqiString.split(" ").associate {
-//                        val (left, right) = it.split("=")
-//                        left to right.toInt()
-//                    }
                     cqi = cqiMap["cqi"].toString()
                 }
             }

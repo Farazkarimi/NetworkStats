@@ -1,10 +1,10 @@
 package com.example.networkstats.Models
 
 data class ThreeGNetworkModel(
-    val rscp: Int? = null,
-    val ecNo: Int? = null,
-    val lac: Int? = null,
+    val rscp: String? = null,
+    val ecNo: String? = null,
+    val lac: String? = null,
     val psc: String? = null,
     val cqi: String? = null,
-    val uarfcn: Int? = null,
-    val nodeB: Int? = null)
+    val uarfcn: String? = null,
+    val nodeB: String? = null)

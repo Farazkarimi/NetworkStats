@@ -16,11 +16,18 @@ import fr.bmartel.speedtest.model.SpeedTestError
 import kotlinx.android.synthetic.main.activity_home.*
 import java.math.BigDecimal
 import fr.bmartel.speedtest.utils.SpeedTestUtils
-import android.view.View.Z
 import java.io.IOException
-import java.net.HttpURLConnection
-import java.net.MalformedURLException
-import java.net.URL
+import android.util.Log
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import com.crashlytics.android.Crashlytics
+import com.google.firebase.analytics.FirebaseAnalytics
+import io.fabric.sdk.android.Fabric
+
+
+
+
+
 
 
 class HomeActivity : AppCompatActivity() {
@@ -33,23 +40,34 @@ class HomeActivity : AppCompatActivity() {
     private lateinit var networkHandler: NetworkHandler
     private var jitter = String()
     private var reportTime = System.currentTimeMillis()
+    private lateinit var firebaseAnalytics: FirebaseAnalytics
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
+        val fabric = Fabric.Builder(this)
+            .kits(Crashlytics())
+            .debuggable(true)
+            .build()
+        Fabric.with(fabric)
+        firebaseAnalytics = FirebaseAnalytics.getInstance(this)
 
         mainHandler.post(object : Runnable {
             override fun run() {
                 calculate()
-                mainHandler.postDelayed(this, 1000)
+                mainHandler.postDelayed(this, 5000)
             }
         })
 
         networkHandler = NetworkHandler(this)
-        val fileName = SpeedTestUtils.generateFileName() + ".txt"
-        uploadTestSocket.startUpload("ftp://speedtest.tele2.net/upload/$fileName", 1000000)
-        downloadTestSocket.startDownload("ftp://speedtest.tele2.net/1MB.zip")
 
+        downloadSpeedListener()
+        uploadSpeedListener()
+
+    }
+
+    private fun downloadSpeedListener() {
+        downloadTestSocket.startDownload("ftp://speedtest.tele2.net/1MB.zip")
         downloadTestSocket.addSpeedTestListener(object : ISpeedTestListener {
 
             override fun onCompletion(report: SpeedTestReport) {
@@ -72,7 +90,11 @@ class HomeActivity : AppCompatActivity() {
                 reportTime = time
             }
         })
+    }
 
+    private fun uploadSpeedListener() {
+        val fileName = SpeedTestUtils.generateFileName() + ".txt"
+        uploadTestSocket.startUpload("ftp://speedtest.tele2.net/upload/$fileName", 1000000)
         uploadTestSocket.addSpeedTestListener(object : ISpeedTestListener {
 
             override fun onCompletion(report: SpeedTestReport) {
@@ -90,32 +112,6 @@ class HomeActivity : AppCompatActivity() {
 
             }
         })
-
-
-    }
-
-    private fun pingCalculated(onPingCalculated: ((String) -> Unit)?) {
-        val time = System.currentTimeMillis()
-        try {
-            val url = URL("http://google.com")
-
-            val urlc = url.openConnection() as HttpURLConnection
-            urlc.setRequestProperty("User-Agent", "Android Application:" + 1.0)
-            urlc.setRequestProperty("Connection", "close")
-            urlc.setConnectTimeout(1000 * 30) // mTimeout is in seconds
-            urlc.connect()
-
-            if (urlc.getResponseCode() === 200) {
-                val currentTime = System.currentTimeMillis()
-                val ping =  currentTime - time
-                onPingCalculated?.invoke(ping.toString())
-            }
-        } catch (e1: MalformedURLException) {
-            e1.printStackTrace()
-        } catch (e: IOException) {
-            e.printStackTrace()
-        }
-
     }
 
     private fun calculate() {
@@ -158,15 +154,16 @@ class HomeActivity : AppCompatActivity() {
         imeiTextView.text = imei.toString()
         val handsetModel = generalNetworkModel.handsetModel
         handsetModelTextView.text = handsetModel
-        var ping = String()
-        Thread {
-            pingCalculated {
-                ping = it
-            }
-            runOnUiThread {
-                pingTextView.text = ping
-            }
-        }.start()
+        var ping = getLatency("www.leader.ir")
+        pingTextView.text = ping.toInt().toString()
+//        Thread {
+//            pingCalculated {
+//                ping = it
+//            }
+//            runOnUiThread {
+//                pingTextView.text = ping
+//            }
+//        }.start()
 
         //uploadTestSocket.forceStopTask()
         upLinlTextView.text = upLink
@@ -270,5 +267,41 @@ class HomeActivity : AppCompatActivity() {
                 // Ignore all other requests.
             }
         }
+    }
+
+    fun getLatency(ipAddress: String): Double {
+        val NUMBER_OF_PACKTETS = 1
+        val pingCommand = "/system/bin/ping -c $NUMBER_OF_PACKTETS $ipAddress"
+        var inputLine: String? = ""
+        var avgRtt = 0.0
+
+        try {
+            // execute the command on the environment interface
+            val process = Runtime.getRuntime().exec(pingCommand)
+            // gets the input stream to get the output of the executed command
+            val bufferedReader = BufferedReader(InputStreamReader(process.inputStream))
+
+            inputLine = bufferedReader.readLine()
+            while (inputLine != null) {
+                if (inputLine.length > 0 && inputLine.contains("avg")) {  // when we get to the last line of executed ping command
+                    break
+                }
+                inputLine = bufferedReader.readLine()
+            }
+        } catch (e: IOException) {
+            Log.v("Debug", "getLatency: EXCEPTION")
+            e.printStackTrace()
+        }
+
+        // Extracting the average round trip time from the inputLine string
+        if (inputLine != null) {
+            val afterEqual = inputLine!!.substring(inputLine.indexOf("="), inputLine.length).trim { it <= ' ' }
+            val afterFirstSlash =
+                afterEqual.substring(afterEqual.indexOf('/') + 1, afterEqual.length).trim { it <= ' ' }
+            val strAvgRtt = afterFirstSlash.substring(0, afterFirstSlash.indexOf('/'))
+            avgRtt = java.lang.Double.valueOf(strAvgRtt)
+        }
+
+        return avgRtt
     }
 }

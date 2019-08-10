@@ -26,8 +26,7 @@ import fr.bmartel.speedtest.SpeedTestReport
 import fr.bmartel.speedtest.model.SpeedTestError
 import fr.bmartel.speedtest.inter.ISpeedTestListener
 import fr.bmartel.speedtest.SpeedTestSocket
-
-
+import java.lang.Exception
 
 
 class NetworkHandler(context: Context) {
@@ -43,9 +42,11 @@ class NetworkHandler(context: Context) {
 
     @SuppressLint("MissingPermission")
     private fun getIMSI(): String {
-        val imei = tele.subscriberId
-
-        return imei
+        var imsi = String()
+        if (tele.subscriberId != null) {
+            imsi = tele.subscriberId
+        }
+        return imsi
     }
 
 
@@ -73,7 +74,7 @@ class NetworkHandler(context: Context) {
                     ret = ret + "\n Cell info lte: " + a_Info.toString()
                     val cellInfoLte = a_Info as CellInfoLte
                     val cellIdentity = cellInfoLte
-                            .cellIdentity
+                        .cellIdentity
 
                 } else if (a_Info is CellInfoWcdma)
                     ret = ret + "\n Cell info : wcdma" + a_Info
@@ -95,7 +96,7 @@ class NetworkHandler(context: Context) {
                     cellInfo = a_Info
                     val cellInfoLte = a_Info as CellInfoLte
                     val cellIdentity = cellInfoLte
-                            .cellIdentity
+                        .cellIdentity
 
                 } else if (a_Info is CellInfoWcdma)
                     cellInfo = a_Info
@@ -105,18 +106,18 @@ class NetworkHandler(context: Context) {
 
     private fun getSignalStrengthDbm(cellInfo: CellInfo): Int {
         return (cellInfo as? CellInfoCdma)?.cellSignalStrength?.dbm
-                ?: ((cellInfo as? CellInfoGsm)?.cellSignalStrength?.dbm
-                        ?: ((cellInfo as? CellInfoLte)?.cellSignalStrength?.dbm
-                                ?: ((cellInfo as? CellInfoWcdma)?.cellSignalStrength?.dbm
-                                        ?: 0)))
+            ?: ((cellInfo as? CellInfoGsm)?.cellSignalStrength?.dbm
+                ?: ((cellInfo as? CellInfoLte)?.cellSignalStrength?.dbm
+                    ?: ((cellInfo as? CellInfoWcdma)?.cellSignalStrength?.dbm
+                        ?: 0)))
     }
 
     private fun getSignalStrengthLevel(cellInfo: CellInfo): Int {
         return (cellInfo as? CellInfoCdma)?.cellSignalStrength?.level
-                ?: ((cellInfo as? CellInfoGsm)?.cellSignalStrength?.level
-                        ?: ((cellInfo as? CellInfoLte)?.cellSignalStrength?.level
-                                ?: ((cellInfo as? CellInfoWcdma)?.cellSignalStrength?.level
-                                        ?: 0)))
+            ?: ((cellInfo as? CellInfoGsm)?.cellSignalStrength?.level
+                ?: ((cellInfo as? CellInfoLte)?.cellSignalStrength?.level
+                    ?: ((cellInfo as? CellInfoWcdma)?.cellSignalStrength?.level
+                        ?: 0)))
     }
 
     private fun getSimOperatorByMnc(): String? {
@@ -137,12 +138,12 @@ class NetworkHandler(context: Context) {
     @SuppressLint("MissingPermission")
     fun get2gNetworkModel(): TwoGNetworkModel {
         return TwoGNetworkModel(
-                getRxLevel(),
-                getRxQual(),
-                getLAC(),
-                getCellID(),
-                getBcch(),
-                getArfcn()
+            getRxLevel(),
+            getRxQual(),
+            getLAC(),
+            getCellID(),
+            getBcch(),
+            getArfcn()
         )
     }
 
@@ -150,9 +151,11 @@ class NetworkHandler(context: Context) {
     private fun getRxLevel(): String {
         var rxLevel = String()
         val cellInfoList = tele.allCellInfo
-        for (cellInfo in cellInfoList) {
-            if (cellInfo is CellInfoGsm && cellInfo.isRegistered) {
-                rxLevel = (2 * (cellInfo.cellSignalStrength.asuLevel) - 113).toString()
+        if (cellInfoList != null) {
+            for (cellInfo in cellInfoList) {
+                if (cellInfo is CellInfoGsm && cellInfo.isRegistered) {
+                    rxLevel = (2 * (cellInfo.cellSignalStrength.asuLevel) - 113).toString()
+                }
             }
         }
         return rxLevel
@@ -162,9 +165,11 @@ class NetworkHandler(context: Context) {
     private fun getRxQual(): String {
         var rxQual = String()
         val cellInfoList = tele.allCellInfo
-        for (cellInfo in cellInfoList) {
-            if (cellInfo is CellInfoGsm && cellInfo.isRegistered) {
-                // rxQual = cellInfo.cellSignalStrength.bitErrorRate
+        if (cellInfoList != null) {
+            for (cellInfo in cellInfoList) {
+                if (cellInfo is CellInfoGsm && cellInfo.isRegistered) {
+                    // rxQual = cellInfo.cellSignalStrength.bitErrorRate
+                }
             }
         }
         return rxQual
@@ -174,17 +179,19 @@ class NetworkHandler(context: Context) {
     private fun getCellID(): String {
         var cellID = String()
         val cellInfoList = tele.allCellInfo
-        for (cellInfo in cellInfoList) {
-            if (cellInfo is CellInfoLte && cellInfo.isRegistered) {
-                cellID = cellInfo.cellIdentity.ci.toString()
+        if (cellInfoList != null) {
+            for (cellInfo in cellInfoList) {
+                if (cellInfo is CellInfoLte && cellInfo.isRegistered) {
+                    cellID = cellInfo.cellIdentity.ci.toString()
 
-            } else if (cellInfo is CellInfoGsm && cellInfo.isRegistered) {
-                cellID = cellInfo.cellIdentity.cid.toString()
-            } else if (cellInfo is CellInfoWcdma && cellInfo.isRegistered) {
-                cellID = cellInfo.cellIdentity.cid.toString()
-            } else if (cellInfo is CellInfoCdma && cellInfo.isRegistered) {
-                cellID = cellInfo.cellIdentity.basestationId.toString()
-                //cellID = ((tele.cellLocation) as GsmCellLocation).cid
+                } else if (cellInfo is CellInfoGsm && cellInfo.isRegistered) {
+                    cellID = cellInfo.cellIdentity.cid.toString()
+                } else if (cellInfo is CellInfoWcdma && cellInfo.isRegistered) {
+                    cellID = cellInfo.cellIdentity.cid.toString()
+                } else if (cellInfo is CellInfoCdma && cellInfo.isRegistered) {
+                    cellID = cellInfo.cellIdentity.basestationId.toString()
+                    //cellID = ((tele.cellLocation) as GsmCellLocation).cid
+                }
             }
         }
         return cellID
@@ -194,20 +201,27 @@ class NetworkHandler(context: Context) {
     private fun getBcch(): String {
         var bcch = String()
         val cellInfoList = tele.allCellInfo
-        for (cellInfo in cellInfoList) {
-            if (cellInfo is CellInfoGsm && cellInfo.isRegistered) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    bcch = cellInfo.cellIdentity.bsic.toString()
-                } else {
-                    val cellIdentityString = cellInfo.cellIdentity.toString()
-                    val cellIdentityArray = cellIdentityString.split(" ").toMutableList()
-                    cellIdentityArray.removeAt(0)
-                    val cellSignalMap = cellIdentityArray.associate {
-                        val (l, r) = it.split("=")
-                        l to r
+        if (cellInfoList != null) {
+            for (cellInfo in cellInfoList) {
+                if (cellInfo is CellInfoGsm && cellInfo.isRegistered) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                        bcch = cellInfo.cellIdentity.bsic.toString()
+                    } else {
+                        val cellIdentityString = cellInfo.cellIdentity.toString()
+                        try {
+                            val cellIdentityArray = cellIdentityString.split(" ").toMutableList()
+                            cellIdentityArray.removeAt(0)
+                            val cellSignalMap = cellIdentityArray.associate {
+                                val (l, r) = it.split("=")
+                                l to r
+                            }
+                            bcch = cellSignalMap["mBsic"]?.substring(2)?.let { HexToDec(it).toString() }
+                                ?: String()
+                        }catch (e: Exception){
+                            Log.e("Error","getBcch Error")
+                        }
+
                     }
-                    bcch = cellSignalMap["mBsic"]?.substring(2)?.let { HexToDec(it).toString() }
-                            ?: String()
                 }
             }
         }
@@ -218,12 +232,14 @@ class NetworkHandler(context: Context) {
     private fun getArfcn(): String {
         var arfcn = String()
         val cellInfoList = tele.allCellInfo
-        for (cellInfo in cellInfoList) {
-            if (cellInfo is CellInfoGsm && cellInfo.isRegistered) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    arfcn = cellInfo.cellIdentity.arfcn.toString()
-                } else {
-                    arfcn = String()
+        if (cellInfoList != null) {
+            for (cellInfo in cellInfoList) {
+                if (cellInfo is CellInfoGsm && cellInfo.isRegistered) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                        arfcn = cellInfo.cellIdentity.arfcn.toString()
+                    } else {
+                        arfcn = String()
+                    }
                 }
             }
         }
@@ -236,13 +252,13 @@ class NetworkHandler(context: Context) {
     @SuppressLint("MissingPermission")
     fun get3gNetworkModel(): ThreeGNetworkModel {
         return ThreeGNetworkModel(
-                getRscp(),
-                getEcNO(),
-                getLAC(),
-                getPSC(),
-                getCQI(),
-                getUArfcn(),
-                getNodeB()
+            getRscp(),
+            getEcNO(),
+            getLAC(),
+            getPSC(),
+            getCQI(),
+            getUArfcn(),
+            getNodeB()
         )
     }
 
@@ -251,11 +267,13 @@ class NetworkHandler(context: Context) {
     private fun getRscp(): String {
         var rscp = String()
         val cellInfoList = tele.allCellInfo
-        for (cellInfo in cellInfoList) {
-            if (cellInfo is CellInfoWcdma && cellInfo.isRegistered) {
-                rscp = (cellInfo.cellSignalStrength.asuLevel - 116).toString()
-            } else if (cellInfo is CellInfoCdma && cellInfo.isRegistered) {
-                rscp = (cellInfo.cellSignalStrength.asuLevel - 116).toString()
+        if (cellInfoList != null) {
+            for (cellInfo in cellInfoList) {
+                if (cellInfo is CellInfoWcdma && cellInfo.isRegistered) {
+                    rscp = (cellInfo.cellSignalStrength.asuLevel - 116).toString()
+                } else if (cellInfo is CellInfoCdma && cellInfo.isRegistered) {
+                    rscp = (cellInfo.cellSignalStrength.asuLevel - 116).toString()
+                }
             }
         }
         return rscp
@@ -265,11 +283,13 @@ class NetworkHandler(context: Context) {
     private fun getEcNO(): String {
         var ecNo = String()
         val cellInfoList = tele.allCellInfo
-        for (cellInfo in cellInfoList) {
-            if (cellInfo is CellInfoWcdma && cellInfo.isRegistered) {
-                // ecNo = RSCP - RSSI
-            } else if (cellInfo is CellInfoCdma && cellInfo.isRegistered) {
-                // ecNo = RSCP - RSSI
+        if (cellInfoList != null) {
+            for (cellInfo in cellInfoList) {
+                if (cellInfo is CellInfoWcdma && cellInfo.isRegistered) {
+                    // ecNo = RSCP - RSSI
+                } else if (cellInfo is CellInfoCdma && cellInfo.isRegistered) {
+                    // ecNo = RSCP - RSSI
+                }
             }
         }
         return ecNo
@@ -279,12 +299,14 @@ class NetworkHandler(context: Context) {
     private fun getLAC(): String {
         var lac = String()
         val cellInfoList = tele.allCellInfo
-        for (cellInfo in cellInfoList) {
-            if (cellInfo is CellInfoGsm && cellInfo.isRegistered) {
-                lac = cellInfo.cellIdentity.lac.toString()
-            }
-            if (cellInfo is CellInfoWcdma && cellInfo.isRegistered) {
-                lac = cellInfo.cellIdentity.lac.toString()
+        if (cellInfoList != null) {
+            for (cellInfo in cellInfoList) {
+                if (cellInfo is CellInfoGsm && cellInfo.isRegistered) {
+                    lac = cellInfo.cellIdentity.lac.toString()
+                }
+                if (cellInfo is CellInfoWcdma && cellInfo.isRegistered) {
+                    lac = cellInfo.cellIdentity.lac.toString()
+                }
             }
         }
         return lac
@@ -295,9 +317,11 @@ class NetworkHandler(context: Context) {
     private fun getPSC(): String {
         var psc = String()
         val cellinfo = tele.allCellInfo
-        for (cell in cellinfo) {
-            if (cell.isRegistered && cell is CellInfoWcdma) {
-                psc = cell.cellIdentity.psc.toString()
+        if (cellinfo != null) {
+            for (cell in cellinfo) {
+                if (cell.isRegistered && cell is CellInfoWcdma) {
+                    psc = cell.cellIdentity.psc.toString()
+                }
             }
         }
         return psc
@@ -307,12 +331,14 @@ class NetworkHandler(context: Context) {
     private fun geteNodeB(): String {
         var eNodeB = String()
         val cellinfo = tele.allCellInfo
-        for (cellInfo in cellinfo) {
-            if (cellInfo.isRegistered && cellInfo is CellInfoLte) {
-                val cellIdHex = DecToHex(cellInfo.cellIdentity.ci)
-                val eNBHex = cellIdHex
+        if (cellinfo != null) {
+            for (cellInfo in cellinfo) {
+                if (cellInfo.isRegistered && cellInfo is CellInfoLte) {
+                    val cellIdHex = DecToHex(cellInfo.cellIdentity.ci)
+                    val eNBHex = cellIdHex
                         .substring(0, cellIdHex.length - 2)
-                eNodeB = (HexToDec(eNBHex)).toString()
+                    eNodeB = (HexToDec(eNBHex)).toString()
+                }
             }
         }
         return eNodeB
@@ -324,17 +350,24 @@ class NetworkHandler(context: Context) {
         var cqi: String = String()
         var cqiMap: Map<String, Int> = mapOf()
         val cellInfoList = tele.allCellInfo
-        for (cellInfo in cellInfoList) {
-            if (cellInfo is CellInfoLte && cellInfo.isRegistered) {
-                val cqiString = cellInfo.cellSignalStrength.toString()
-                if (cqiString.length > 0) {
-                    val cqiArray = cqiString.split(" ").toMutableList()
-                    cqiArray.removeAt(0)
-                    cqiMap = cqiArray.associate {
-                        val (l, r) = it.split("=")
-                        l to r.toInt()
+        if (cellInfoList != null) {
+            for (cellInfo in cellInfoList) {
+                if (cellInfo is CellInfoLte && cellInfo.isRegistered) {
+                    val cqiString = cellInfo.cellSignalStrength.toString()
+                    if (cqiString.length > 0) {
+                        try {
+                            val cqiArray = cqiString.split(" ").toMutableList()
+                            cqiArray.removeAt(0)
+                            cqiMap = cqiArray.associate {
+                                val (l, r) = it.split("=")
+                                l to r.toInt()
+                            }
+                            cqi = cqiMap["cqi"].toString()
+                        }catch (e: Exception){
+                            Log.e("Error", "getCQI Error")
+                        }
+
                     }
-                    cqi = cqiMap["cqi"].toString()
                 }
             }
         }
@@ -345,21 +378,23 @@ class NetworkHandler(context: Context) {
     private fun getUArfcn(): String {
         var uArfcn = String()
         val cellInfoList = tele.allCellInfo
-        for (cellInfo in cellInfoList) {
-            if (cellInfo is CellInfoWcdma && cellInfo.isRegistered) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    uArfcn = cellInfo.cellIdentity.uarfcn.toString()
-                } else {
-                    val cellIdentityString = cellInfo.cellIdentity.toString()
-                    val cellIdentityArray = cellIdentityString.split(" ").toMutableList()
-                    cellIdentityArray.removeAt(0)
-                    val cellSignalMap = cellIdentityArray.associate {
-                        val (l, r) = it.split("=")
-                        l to r.toInt()
+        if (cellInfoList != null) {
+            for (cellInfo in cellInfoList) {
+                if (cellInfo is CellInfoWcdma && cellInfo.isRegistered) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                        uArfcn = cellInfo.cellIdentity.uarfcn.toString()
+                    } else {
+                        val cellIdentityString = cellInfo.cellIdentity.toString()
+                        val cellIdentityArray = cellIdentityString.split(" ").toMutableList()
+                        cellIdentityArray.removeAt(0)
+                        val cellSignalMap = cellIdentityArray.associate {
+                            val (l, r) = it.split("=")
+                            l to r.toInt()
+                        }
+                        uArfcn = cellSignalMap["mUarfcn"].toString()
                     }
-                    uArfcn = cellSignalMap["mUarfcn"].toString()
-                }
 
+                }
             }
         }
         return uArfcn
@@ -369,18 +404,20 @@ class NetworkHandler(context: Context) {
     private fun getNodeB(): String {
         var NodeB = String()
         val cellinfo = tele.allCellInfo
-        for (cellInfo in cellinfo) {
-            if (cellInfo.isRegistered && cellInfo is CellInfoCdma) {
-                val cellIdHex = DecToHex(cellInfo.cellIdentity.basestationId)
-                val eNBHex = cellIdHex
+        if (cellinfo != null) {
+            for (cellInfo in cellinfo) {
+                if (cellInfo.isRegistered && cellInfo is CellInfoCdma) {
+                    val cellIdHex = DecToHex(cellInfo.cellIdentity.basestationId)
+                    val eNBHex = cellIdHex
                         .substring(0, cellIdHex.length - 2)
-                NodeB = (HexToDec(eNBHex)).toString()
-            }
-            if (cellInfo.isRegistered && cellInfo is CellInfoWcdma) {
-                val cellIdHex = DecToHex(cellInfo.cellIdentity.cid)
-                val eNBHex = cellIdHex
+                    NodeB = (HexToDec(eNBHex)).toString()
+                }
+                if (cellInfo.isRegistered && cellInfo is CellInfoWcdma) {
+                    val cellIdHex = DecToHex(cellInfo.cellIdentity.cid)
+                    val eNBHex = cellIdHex
                         .substring(0, cellIdHex.length - 2)
-                NodeB = (HexToDec(eNBHex)).toString()
+                    NodeB = (HexToDec(eNBHex)).toString()
+                }
             }
         }
         return NodeB
@@ -391,14 +428,14 @@ class NetworkHandler(context: Context) {
     fun get4gNetworkModel(): FourGNetworkModel {
 
         return FourGNetworkModel(
-                getRSRP(),
-                getRSRQ(),
-                getTAC(),
-                getpci(),
-                getRssi(),
-                getCQI(),
-                geteNodeB(),
-                getEArfcn()
+            getRSRP(),
+            getRSRQ(),
+            getTAC(),
+            getpci(),
+            getRssi(),
+            getCQI(),
+            geteNodeB(),
+            getEArfcn()
         )
     }
 
@@ -406,12 +443,14 @@ class NetworkHandler(context: Context) {
     private fun getRSRP(): String {
         var rsrp = String()
         val cellInfoList = tele.allCellInfo
-        for (cellInfo in cellInfoList) {
-            if (cellInfo is CellInfoLte && cellInfo.isRegistered) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    rsrp = cellInfo.cellSignalStrength.rsrp.toString()
-                } else {
-                    rsrp = cellInfo.cellSignalStrength.dbm.toString()
+        if (cellInfoList != null) {
+            for (cellInfo in cellInfoList) {
+                if (cellInfo is CellInfoLte && cellInfo.isRegistered) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        rsrp = cellInfo.cellSignalStrength.rsrp.toString()
+                    } else {
+                        rsrp = cellInfo.cellSignalStrength.dbm.toString()
+                    }
                 }
             }
         }
@@ -422,19 +461,25 @@ class NetworkHandler(context: Context) {
     private fun getRSRQ(): String {
         var rsrq = String()
         val cellInfoList = tele.allCellInfo
-        for (cellInfo in cellInfoList) {
-            if (cellInfo is CellInfoLte && cellInfo.isRegistered) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    rsrq = cellInfo.cellSignalStrength.rsrq.toString()
-                } else {
-                    val cellSignalString = cellInfo.cellSignalStrength.toString()
-                    val cellSignalArray = cellSignalString.split(" ").toMutableList()
-                    cellSignalArray.removeAt(0)
-                    val cellSignalMap = cellSignalArray.associate {
-                        val (l, r) = it.split("=")
-                        l to r.toInt()
+        if (cellInfoList != null) {
+            for (cellInfo in cellInfoList) {
+                if (cellInfo is CellInfoLte && cellInfo.isRegistered) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        rsrq = cellInfo.cellSignalStrength.rsrq.toString()
+                    } else {
+                        try {
+                            val cellSignalString = cellInfo.cellSignalStrength.toString()
+                            val cellSignalArray = cellSignalString.split(" ").toMutableList()
+                            cellSignalArray.removeAt(0)
+                            val cellSignalMap = cellSignalArray.associate {
+                                val (l, r) = it.split("=")
+                                l to r.toInt()
+                            }
+                            rsrq = cellSignalMap["rsrq"].toString()
+                        } catch (e: Exception) {
+                            Log.e("Error", "getRSRQ Error")
+                        }
                     }
-                    rsrq = cellSignalMap["rsrq"].toString()
                 }
             }
         }
@@ -445,9 +490,11 @@ class NetworkHandler(context: Context) {
     private fun getTAC(): String {
         var tac = String()
         val cellInfoList = tele.allCellInfo
-        for (cellInfo in cellInfoList) {
-            if (cellInfo is CellInfoLte && cellInfo.isRegistered) {
-                tac = cellInfo.cellIdentity.tac.toString()
+        if (cellInfoList != null) {
+            for (cellInfo in cellInfoList) {
+                if (cellInfo is CellInfoLte && cellInfo.isRegistered) {
+                    tac = cellInfo.cellIdentity.tac.toString()
+                }
             }
         }
         return tac
@@ -457,19 +504,26 @@ class NetworkHandler(context: Context) {
     private fun getEArfcn(): String {
         var earfcn = String()
         val cellInfoList = tele.allCellInfo
-        for (cellInfo in cellInfoList) {
-            if (cellInfo is CellInfoLte && cellInfo.isRegistered) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    earfcn = cellInfo.cellIdentity.earfcn.toString()
-                } else {
-                    val cellIdentityString = cellInfo.cellIdentity.toString()
-                    val cellIdentityArray = cellIdentityString.split(" ").toMutableList()
-                    cellIdentityArray.removeAt(0)
-                    val cellSignalMap = cellIdentityArray.associate {
-                        val (l, r) = it.split("=")
-                        l to r.toInt()
+        if (cellInfoList != null) {
+            for (cellInfo in cellInfoList) {
+                if (cellInfo is CellInfoLte && cellInfo.isRegistered) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                        earfcn = cellInfo.cellIdentity.earfcn.toString()
+                    } else {
+                        val cellIdentityString = cellInfo.cellIdentity.toString()
+                        try {
+                            val cellIdentityArray = cellIdentityString.split(" ").toMutableList()
+                            cellIdentityArray.removeAt(0)
+                            val cellSignalMap = cellIdentityArray.associate {
+                                val (l, r) = it.split("=")
+                                l to r.toInt()
+                            }
+                            earfcn = cellSignalMap["mEarfcn"].toString()
+                        } catch (e: Exception) {
+                            Log.e("Error", "getEarfcn Error")
+                        }
+
                     }
-                    earfcn = cellSignalMap["mEarfcn"].toString()
                 }
             }
         }
@@ -481,9 +535,11 @@ class NetworkHandler(context: Context) {
     private fun getpci(): String {
         var pci = String()
         val cellInfoList = tele.allCellInfo
-        for (cellInfo in cellInfoList) {
-            if (cellInfo is CellInfoLte && cellInfo.isRegistered) {
-                pci = cellInfo.cellIdentity.pci.toString()
+        if (cellInfoList != null) {
+            for (cellInfo in cellInfoList) {
+                if (cellInfo is CellInfoLte && cellInfo.isRegistered) {
+                    pci = cellInfo.cellIdentity.pci.toString()
+                }
             }
         }
         return pci
@@ -493,12 +549,14 @@ class NetworkHandler(context: Context) {
     private fun getRssi(): String {
         var rssi = String()
         val cellInfoList = tele.allCellInfo
-        for (cellInfo in cellInfoList) {
-            if (cellInfo is CellInfoLte && cellInfo.isRegistered) {
-                try {
-                    // rssi = cellInfo.cellSignalStrength.rssi.toString()
-                } catch (e: IOException) {
-                    Log.e("Exception", "No Rssi Found")
+        if (cellInfoList != null) {
+            for (cellInfo in cellInfoList) {
+                if (cellInfo is CellInfoLte && cellInfo.isRegistered) {
+                    try {
+                        // rssi = cellInfo.cellSignalStrength.rssi.toString()
+                    } catch (e: IOException) {
+                        Log.e("Exception", "No Rssi Found")
+                    }
                 }
             }
         }
@@ -522,22 +580,22 @@ class NetworkHandler(context: Context) {
             tele.getDeviceId()
         }
         generalNetworkModel = GeneralNetworkModel(
-                lat,
-                long,
-                networkType,
-                operator,
-                mcc,
-                mnc,
-                getUploadSpeed(),
-                getDownloadSpeed(),
-                getNeighbors()
-                ,
-                null,
-                imei,
-                getIMSI(),
-                getDeviceName(),
-                null,
-                null
+            lat,
+            long,
+            networkType,
+            operator,
+            mcc,
+            mnc,
+            getUploadSpeed(),
+            getDownloadSpeed(),
+            getNeighbors()
+            ,
+            null,
+            imei,
+            getIMSI(),
+            getDeviceName(),
+            null,
+            null
         )
         return generalNetworkModel
     }
@@ -564,15 +622,17 @@ class NetworkHandler(context: Context) {
     @SuppressLint("MissingPermission")
     private fun getNeighbors(): String {
         var neighbors = String()
-            var neighboringCellList: MutableList<CellInfo> = mutableListOf()
-            val cellinfo = tele.allCellInfo
+        var neighboringCellList: MutableList<CellInfo> = mutableListOf()
+        val cellinfo = tele.allCellInfo
+        if (cellinfo != null) {
             for (cell in cellinfo) {
                 if (!cell.isRegistered) {
                     neighboringCellList.add(cell)
                 }
             }
             neighbors = neighboringCellList.toString()
-            return neighbors
+        }
+        return neighbors
     }
 
 
@@ -603,19 +663,21 @@ class NetworkHandler(context: Context) {
         getNetworkTypeString(tele.networkType)
         var networkType = String()
         val cellInfoList = tele.allCellInfo
-        for (cellInfo in cellInfoList) {
-            if (cellInfo is CellInfoLte && cellInfo.isRegistered) {
-                networkType = "LTE"
-            } else if (cellInfo is CellInfoGsm && cellInfo.isRegistered) {
-                networkType = "2G"
-            } else if (cellInfo is CellInfoWcdma && cellInfo.isRegistered) {
-                networkType = "3G"
-            } else if (cellInfo is CellInfoCdma && cellInfo.isRegistered) {
-                networkType = "3G"
+        if (cellInfoList != null) {
+            for (cellInfo in cellInfoList) {
+                if (cellInfo is CellInfoLte && cellInfo.isRegistered) {
+                    networkType = "LTE"
+                } else if (cellInfo is CellInfoGsm && cellInfo.isRegistered) {
+                    networkType = "2G"
+                } else if (cellInfo is CellInfoWcdma && cellInfo.isRegistered) {
+                    networkType = "3G"
+                } else if (cellInfo is CellInfoCdma && cellInfo.isRegistered) {
+                    networkType = "3G"
+                }
             }
-        }
-        if (getNetworkTypeString(tele.networkType) != "unknown") {
-            networkType = getNetworkTypeString(tele.networkType)
+            if (getNetworkTypeString(tele.networkType) != "unknown") {
+                networkType = getNetworkTypeString(tele.networkType)
+            }
         }
         return networkType
     }
@@ -626,9 +688,9 @@ class NetworkHandler(context: Context) {
         val locationManager: LocationManager
         val context = context.getSystemService(LOCATION_SERVICE)
         locationManager = context as LocationManager
-        val provider = LocationManager.NETWORK_PROVIDER
-        val location = locationManager.getLastKnownLocation(provider)
-        if (location != null) {
+        val provider = LocationManager.GPS_PROVIDER
+        if (locationManager.getLastKnownLocation(provider) != null) {
+            val location = locationManager.getLastKnownLocation(provider)
             return location!!.latitude
         }
         return 0.0
@@ -640,9 +702,9 @@ class NetworkHandler(context: Context) {
         val locationManager: LocationManager
         val context = context.getSystemService(LOCATION_SERVICE)
         locationManager = context as LocationManager
-        val provider = LocationManager.NETWORK_PROVIDER
-        val location = locationManager.getLastKnownLocation(provider)
-        if (location != null) {
+        val provider = LocationManager.GPS_PROVIDER
+        if (locationManager.getLastKnownLocation(provider) != null) {
+            val location = locationManager.getLastKnownLocation(provider)
             return location!!.longitude
         }
         return 0.0
@@ -678,9 +740,11 @@ class NetworkHandler(context: Context) {
         var upSpeed = String()
         var cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            var nc = cm.getNetworkCapabilities(cm.activeNetwork)
-            upSpeed = nc!!.linkUpstreamBandwidthKbps.toString()
-            return upSpeed
+            if (cm.getNetworkCapabilities(cm.activeNetwork) != null) {
+                var nc = cm.getNetworkCapabilities(cm.activeNetwork)
+                upSpeed = nc!!.linkUpstreamBandwidthKbps.toString()
+                return upSpeed
+            }
         }
         return upSpeed
     }

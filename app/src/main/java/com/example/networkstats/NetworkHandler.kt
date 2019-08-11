@@ -3,30 +3,21 @@ package com.example.networkstats
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Context.LOCATION_SERVICE
-import android.os.Build
-import android.telephony.CellInfoWcdma
-import android.telephony.CellInfoLte
-import android.telephony.CellInfoGsm
-import android.telephony.CellInfoCdma
-import android.telephony.CellInfo
-import android.telephony.TelephonyManager
-import com.example.networkstats.Models.GeneralNetworkModel
 import android.location.LocationManager
+import android.net.ConnectivityManager
+import android.os.Build
+import android.telephony.*
+import android.text.TextUtils
 import android.util.Log
 import com.example.networkstats.Models.FourGNetworkModel
+import com.example.networkstats.Models.GeneralNetworkModel
 import com.example.networkstats.Models.ThreeGNetworkModel
 import com.example.networkstats.Models.TwoGNetworkModel
-import java.io.IOException
-import android.text.TextUtils
-import android.net.NetworkCapabilities
-import android.net.NetworkInfo
-import androidx.core.content.ContextCompat.getSystemService
-import android.net.ConnectivityManager
 import fr.bmartel.speedtest.SpeedTestReport
-import fr.bmartel.speedtest.model.SpeedTestError
-import fr.bmartel.speedtest.inter.ISpeedTestListener
 import fr.bmartel.speedtest.SpeedTestSocket
-import java.lang.Exception
+import fr.bmartel.speedtest.inter.ISpeedTestListener
+import fr.bmartel.speedtest.model.SpeedTestError
+import java.io.IOException
 
 
 class NetworkHandler(context: Context) {
@@ -385,13 +376,18 @@ class NetworkHandler(context: Context) {
                         uArfcn = cellInfo.cellIdentity.uarfcn.toString()
                     } else {
                         val cellIdentityString = cellInfo.cellIdentity.toString()
-                        val cellIdentityArray = cellIdentityString.split(" ").toMutableList()
-                        cellIdentityArray.removeAt(0)
-                        val cellSignalMap = cellIdentityArray.associate {
-                            val (l, r) = it.split("=")
-                            l to r.toInt()
+                        try{
+                            val cellIdentityArray = cellIdentityString.split(" ").toMutableList()
+                            cellIdentityArray.removeAt(0)
+                            val cellSignalMap = cellIdentityArray.associate {
+                                val (l, r) = it.split("=")
+                                l to r.toInt()
+                            }
+                            uArfcn = cellSignalMap["mUarfcn"].toString()
+                        }catch (e: Exception){
+                            Log.e("Error","getUArfcn Error")
                         }
-                        uArfcn = cellSignalMap["mUarfcn"].toString()
+
                     }
 
                 }
